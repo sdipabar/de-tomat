@@ -10,7 +10,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        #map { height: 500px; z-index: 1; }
+        #map { height: 550px; z-index: 1; }
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
         .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; }
         .custom-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
@@ -27,9 +27,12 @@
                 </div>
                 <span class="text-xl font-bold tracking-tight text-slate-800">Goo<span class="text-blue-600">KML</span></span>
             </div>
-            <div class="flex space-x-8">
-                <button onclick="openTab('peta')" id="tab-peta" class="nav-link py-5 text-sm font-semibold tab-active transition-all">
-                    <i class="fas fa-route mr-1"></i> Analisis Jalur
+            <div class="flex space-x-6">
+                <button onclick="openTab('peta', 50, 'TIANG')" id="tab-peta" class="nav-link py-5 text-sm font-semibold tab-active transition-all">
+                    <i class="fas fa-route mr-1"></i> Analisis Jalur (50m)
+                </button>
+                <button onclick="openTab('slack', 500, 'SLACK SUPORT')" id="tab-slack" class="nav-link py-5 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-all">
+                    <i class="fas fa-anchor mr-1"></i> Analisis Slack (500m)
                 </button>
                 <button onclick="openTab('hitung')" id="tab-hitung" class="nav-link py-5 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-all">
                     <i class="fas fa-list-ol mr-1"></i> Penghitung Cepat
@@ -41,33 +44,36 @@
 
 <main class="max-w-7xl mx-auto px-4 py-8">
     
-    <div id="peta" class="tab-content">
+    <div id="analysis-section" class="tab-content">
         <div class="grid lg:grid-cols-12 gap-8">
             <div class="lg:col-span-4 space-y-6">
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 custom-shadow">
-                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                        <i class="fas fa-cog text-blue-600"></i> Konfigurasi Tiang
-                    </h3>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold flex items-center gap-2">
+                            <i class="fas fa-cog text-blue-600"></i> Konfigurasi 
+                        </h3>
+                        <span id="modeBadge" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold uppercase">Mode: Tiang</span>
+                    </div>
                     
                     <div id="dropZone" class="group relative border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer">
                         <input type="file" id="fileInput" class="hidden" accept=".kml">
                         <div class="text-slate-400 group-hover:text-blue-600 transition-colors">
                             <i class="fas fa-cloud-upload-alt text-4xl mb-3"></i>
-                            <p class="text-sm font-medium" id="labelFile">Klik atau tarik file KML Anda ke sini</p>
+                            <p class="text-sm font-medium" id="labelFile">Tarik file KML ke sini</p>
                         </div>
                     </div>
 
                     <div class="mt-6 space-y-3">
                         <div class="flex justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
-                            <span class="text-sm text-slate-500">Jarak antar tiang</span>
-                            <span class="text-sm font-bold text-slate-700">50 Meter</span>
+                            <span class="text-sm text-slate-500">Interval Target</span>
+                            <span class="text-sm font-bold text-slate-700" id="infoInterval">50 Meter</span>
                         </div>
                         <div class="flex justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
                             <span class="text-sm text-slate-500">Panjang Jalur</span>
                             <span class="text-sm font-bold text-blue-600" id="outDist">0 m</span>
                         </div>
                         <div class="flex justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
-                            <span class="text-sm text-slate-500">Estimasi Tiang</span>
+                            <span class="text-sm text-slate-500" id="labelOutput">Total Titik</span>
                             <span class="text-sm font-bold text-blue-600" id="outPoles">0</span>
                         </div>
                     </div>
@@ -82,7 +88,7 @@
                 <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
                     <p class="text-xs text-blue-700 leading-relaxed">
                         <i class="fas fa-info-circle mr-1"></i> 
-                        Sistem ini otomatis menghitung penempatan tiang setiap 50 meter mengikuti bentuk kurva LineString pada file KML Anda.
+                        Sistem akan menghitung penempatan <span id="infoType">objek</span> setiap <span id="infoIntervalText">50</span> meter berdasarkan data koordinat LineString.
                     </p>
                 </div>
             </div>
@@ -118,34 +124,58 @@
 
 <footer class="mt-20 py-10 border-t border-slate-200 text-center">
     <p class="text-slate-400 text-sm">© 2026 <strong>SDI PABAR</strong> • Professional Geospatial Tools</p>
-    <div class="flex justify-center gap-4 mt-4 text-slate-300">
-        <i class="fab fa-google"></i>
-        <i class="fas fa-map"></i>
-        <i class="fas fa-satellite"></i>
-    </div>
 </footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // --- KONFIGURASI ---
-    const POLE_INTERVAL = 50;
+    // --- STATE MANAGEMENT ---
+    let currentInterval = 50;
+    let currentPlacemarkName = "TIANG";
     let map, markerLayer, routeLayer, finalKML = "";
 
     // --- TAB SYSTEM ---
-    function openTab(tabId) {
+    function openTab(tabId, interval = 50, pName = "TIANG") {
+        // Reset Tabs UI
         document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
         document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('tab-active', 'text-blue-600'));
         document.querySelectorAll('.nav-link').forEach(l => l.classList.add('text-slate-500'));
 
-        document.getElementById(tabId).classList.remove('hidden');
-        document.getElementById('tab-' + tabId).classList.add('tab-active', 'text-blue-600');
-        
-        if(tabId === 'peta' && map) {
-            setTimeout(() => map.invalidateSize(), 200);
+        if (tabId === 'hitung') {
+            document.getElementById('hitung').classList.remove('hidden');
+            document.getElementById('tab-hitung').classList.add('tab-active', 'text-blue-600');
+        } else {
+            // Setup Mode (Jalur 50m atau Slack 500m)
+            currentInterval = interval;
+            currentPlacemarkName = pName;
+            
+            document.getElementById('analysis-section').classList.remove('hidden');
+            document.getElementById('tab-' + tabId).classList.add('tab-active', 'text-blue-600');
+            
+            // Update UI Labels
+            document.getElementById('modeBadge').textContent = `Mode: ${pName}`;
+            document.getElementById('infoInterval').textContent = `${interval} Meter`;
+            document.getElementById('infoIntervalText').textContent = interval;
+            document.getElementById('infoType').textContent = pName.toLowerCase();
+            document.getElementById('labelOutput').textContent = `Estimasi ${pName}`;
+
+            if(map) {
+                setTimeout(() => map.invalidateSize(), 200);
+                resetResults();
+            }
         }
     }
 
-    // --- PLACEMARK COUNTER ---
+    function resetResults() {
+        if(markerLayer) markerLayer.clearLayers();
+        if(routeLayer) routeLayer.clearLayers();
+        document.getElementById('outDist').textContent = "0 m";
+        document.getElementById('outPoles').textContent = "0";
+        document.getElementById('downloadBtn').classList.add('hidden');
+        document.getElementById('message').classList.add('hidden');
+        document.getElementById('labelFile').textContent = "Tarik file KML ke sini";
+    }
+
+    // --- QUICK COUNTER ---
     document.getElementById('kmlPasteInput').addEventListener('input', function() {
         const matches = this.value.match(/<Placemark/gi);
         document.getElementById('manualCount').innerText = matches ? matches.length : 0;
@@ -157,7 +187,7 @@
         L.control.zoom({ position: 'bottomright' }).addTo(map);
         
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
+            attribution: '&copy; OpenStreetMap'
         }).addTo(map);
 
         markerLayer = L.layerGroup().addTo(map);
@@ -165,7 +195,7 @@
     }
     initMap();
 
-    // --- CORE LOGIC ---
+    // --- FILE HANDLING ---
     const fileInput = document.getElementById('fileInput');
     const dropZone = document.getElementById('dropZone');
     const downloadBtn = document.getElementById('downloadBtn');
@@ -181,6 +211,7 @@
         reader.readAsText(file);
     };
 
+    // Haversine formula
     function getDist(p1, p2) {
         const R = 6371e3;
         const dLat = (p2.lat - p1.lat) * Math.PI / 180;
@@ -195,7 +226,7 @@
         const lines = xml.getElementsByTagName("LineString");
 
         if (lines.length === 0) {
-            showMsg("⚠️ File tidak mengandung LineString (jalur)!", "bg-red-100 text-red-700");
+            showMsg("⚠️ File tidak mengandung LineString!", "bg-red-100 text-red-700");
             return;
         }
 
@@ -203,7 +234,7 @@
         routeLayer.clearLayers();
         let placemarksXML = "";
         let totalDistance = 0;
-        let poleCount = 0;
+        let objectCount = 0;
         let bounds = [];
 
         for (let i = 0; i < lines.length; i++) {
@@ -213,7 +244,7 @@
                 return { lng: parseFloat(p[0]), lat: parseFloat(p[1]) };
             });
 
-            L.polyline(path.map(p => [p.lat, p.lng]), {color: '#2563eb', weight: 5, opacity: 0.7}).addTo(routeLayer);
+            L.polyline(path.map(p => [p.lat, p.lng]), {color: '#2563eb', weight: 4, opacity: 0.6}).addTo(routeLayer);
 
             let currentPathDist = 0;
             let nextMilestone = 0;
@@ -228,18 +259,22 @@
                     const lat = p1.lat + (p2.lat - p1.lat) * Math.max(0, Math.min(1, ratio));
                     const lng = p1.lng + (p2.lng - p1.lng) * Math.max(0, Math.min(1, ratio));
 
-                    placemarksXML += `<Placemark><name>TN</name><Point><coordinates>${lng},${lat},0</coordinates></Point></Placemark>`;
+                    placemarksXML += `
+                    <Placemark>
+                        <name>${currentPlacemarkName} ${objectCount + 1}</name>
+                        <Point><coordinates>${lng},${lat},0</coordinates></Point>
+                    </Placemark>`;
                     
                     L.circleMarker([lat, lng], {
-                        radius: 6, 
+                        radius: currentPlacemarkName === "TIANG" ? 5 : 7, 
                         color: '#ffffff', 
-                        fillColor: '#ef4444', 
+                        fillColor: currentPlacemarkName === "TIANG" ? '#3b82f6' : '#ef4444', 
                         fillOpacity: 1, 
                         weight: 2
-                    }).addTo(markerLayer).bindPopup(`TN`);
+                    }).addTo(markerLayer).bindPopup(`${currentPlacemarkName} ${objectCount + 1}`);
 
-                    poleCount++;
-                    nextMilestone += POLE_INTERVAL;
+                    objectCount++;
+                    nextMilestone += currentInterval;
                 }
                 currentPathDist += segDist;
                 bounds.push([p1.lat, p1.lng], [p2.lat, p2.lng]);
@@ -247,12 +282,12 @@
             totalDistance += currentPathDist;
         }
 
-        finalKML = `<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Hasil_${fileName}</name>${placemarksXML}</Document></kml>`;
+        finalKML = `<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Hasil_${currentPlacemarkName}_${fileName}</name>${placemarksXML}</Document></kml>`;
 
         document.getElementById('outDist').textContent = Math.round(totalDistance).toLocaleString() + " meter";
-        document.getElementById('outPoles').textContent = poleCount;
+        document.getElementById('outPoles').textContent = objectCount;
         downloadBtn.classList.remove('hidden');
-        showMsg("✅ Analisis berhasil diselesaikan!", "bg-emerald-100 text-emerald-700");
+        showMsg(`✅ Analisis ${currentPlacemarkName} selesai!`, "bg-emerald-100 text-emerald-700");
         if(bounds.length) map.fitBounds(bounds, {padding: [50, 50]});
     }
 
@@ -267,9 +302,26 @@
         const blob = new Blob([finalKML], { type: 'application/vnd.google-earth.kml+xml' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = "Analisis_Tiang_SDI.kml";
+        a.download = `Hasil_Analisis_${currentPlacemarkName}.kml`;
         a.click();
     };
+
+    // --- DRAG & DROP SUPPORT ---
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const file = e.dataTransfer.files[0];
+        if(file && file.name.endsWith('.kml')) {
+            document.getElementById('labelFile').textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = (ev) => processData(ev.target.result, file.name);
+            reader.readAsText(file);
+        } else {
+            alert("Harap masukkan file .kml");
+        }
+    });
 </script>
 </body>
 </html>
