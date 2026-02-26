@@ -130,11 +130,11 @@
 <script>
     // --- STATE MANAGEMENT ---
     let currentInterval = 50;
-    let currentPlacemarkName = "TIANG";
+    let currentPlacemarkName = "TN";
     let map, markerLayer, routeLayer, finalKML = "";
 
     // --- TAB SYSTEM ---
-    function openTab(tabId, interval = 50, pName = "TIANG") {
+    function openTab(tabId, interval = 50, pName = "TN") {
         // Reset Tabs UI
         document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
         document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('tab-active', 'text-blue-600'));
@@ -152,11 +152,11 @@
             document.getElementById('tab-' + tabId).classList.add('tab-active', 'text-blue-600');
             
             // Update UI Labels
-            document.getElementById('modeBadge').textContent = `Mode: ${pName}`;
-            document.getElementById('infoInterval').textContent = `${interval} Meter`;
+            document.getElementById('modeBadge').textContent = `Mode: {pName}`;
+            document.getElementById('infoInterval').textContent = `{interval} Meter`;
             document.getElementById('infoIntervalText').textContent = interval;
             document.getElementById('infoType').textContent = pName.toLowerCase();
-            document.getElementById('labelOutput').textContent = `Estimasi ${pName}`;
+            document.getElementById('labelOutput').textContent = `Estimasi {pName}`;
 
             if(map) {
                 setTimeout(() => map.invalidateSize(), 200);
@@ -261,7 +261,7 @@
 
                     placemarksXML += `
                     <Placemark>
-                        <name>${currentPlacemarkName} ${objectCount + 1}</name>
+                        <name>${currentPlacemarkName}</name>
                         <Point><coordinates>${lng},${lat},0</coordinates></Point>
                     </Placemark>`;
                     
@@ -271,7 +271,7 @@
                         fillColor: currentPlacemarkName === "TIANG" ? '#3b82f6' : '#ef4444', 
                         fillOpacity: 1, 
                         weight: 2
-                    }).addTo(markerLayer).bindPopup(`${currentPlacemarkName} ${objectCount + 1}`);
+                    }).addTo(markerLayer).bindPopup(`${currentPlacemarkName}`);
 
                     objectCount++;
                     nextMilestone += currentInterval;
