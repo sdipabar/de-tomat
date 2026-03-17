@@ -10,9 +10,9 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        #map { height: 550px; z-index: 1; }
+        #map { height: 550px; z-index: 1; border-radius: 0.75rem; }
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; }
+        .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb !important; }
         .custom-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
     </style>
 </head>
@@ -27,14 +27,17 @@
                 </div>
                 <span class="text-xl font-bold tracking-tight text-slate-800">Goo<span class="text-blue-600">KML</span></span>
             </div>
-            <div class="flex space-x-6">
-                <button onclick="openTab('peta', 50, 'TIANG')" id="tab-peta" class="nav-link py-5 text-sm font-semibold tab-active transition-all">
-                    <i class="fas fa-route mr-1"></i> Analisis Jalur (50m)
+            <div class="flex space-x-6 h-full">
+                <button onclick="openTab('peta', 50, 'TIANG')" id="tab-peta" class="nav-link px-2 text-sm font-semibold tab-active transition-all flex items-center">
+                    <i class="fas fa-route mr-1"></i> Jalur (50m)
                 </button>
-                <button onclick="openTab('slack', 500, 'SLACK SUPORT')" id="tab-slack" class="nav-link py-5 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-all">
-                    <i class="fas fa-anchor mr-1"></i> Analisis Slack (500m)
+                <button onclick="openTab('slack500', 500, 'SLACK SUPORT')" id="tab-slack500" class="nav-link px-2 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-all flex items-center">
+                    <i class="fas fa-anchor mr-1"></i> Slack (500m)
                 </button>
-                <button onclick="openTab('hitung')" id="tab-hitung" class="nav-link py-5 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-all">
+                <button onclick="openTab('slack600', 600, 'SLACK SUPORT')" id="tab-slack600" class="nav-link px-2 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-all flex items-center">
+                    <i class="fas fa-anchor mr-1"></i> Slack (600m)
+                </button>
+                <button onclick="openTab('hitung')" id="tab-hitung" class="nav-link px-2 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-all flex items-center">
                     <i class="fas fa-list-ol mr-1"></i> Penghitung Cepat
                 </button>
             </div>
@@ -43,7 +46,6 @@
 </nav>
 
 <main class="max-w-7xl mx-auto px-4 py-8">
-    
     <div id="analysis-section" class="tab-content">
         <div class="grid lg:grid-cols-12 gap-8">
             <div class="lg:col-span-4 space-y-6">
@@ -65,15 +67,15 @@
 
                     <div class="mt-6 space-y-3">
                         <div class="flex justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
-                            <span class="text-sm text-slate-500">Interval Target</span>
+                            <span class="text-sm text-slate-600">Interval Target</span>
                             <span class="text-sm font-bold text-slate-700" id="infoInterval">50 Meter</span>
                         </div>
                         <div class="flex justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
-                            <span class="text-sm text-slate-500">Panjang Jalur</span>
+                            <span class="text-sm text-slate-600">Panjang Jalur</span>
                             <span class="text-sm font-bold text-blue-600" id="outDist">0 m</span>
                         </div>
                         <div class="flex justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
-                            <span class="text-sm text-slate-500" id="labelOutput">Total Titik</span>
+                            <span class="text-sm text-slate-600" id="labelOutput">Total Titik</span>
                             <span class="text-sm font-bold text-blue-600" id="outPoles">0</span>
                         </div>
                     </div>
@@ -95,7 +97,7 @@
 
             <div class="lg:col-span-8">
                 <div class="bg-white p-2 rounded-2xl border border-slate-200 custom-shadow overflow-hidden">
-                    <div id="map" class="rounded-xl"></div>
+                    <div id="map"></div>
                 </div>
             </div>
         </div>
@@ -105,7 +107,6 @@
         <div class="max-w-3xl mx-auto bg-white p-8 rounded-2xl border border-slate-200 custom-shadow">
             <h3 class="text-2xl font-bold mb-2">Penghitung Penanda Letak Cepat</h3>
             <p class="text-slate-500 mb-6">Tempelkan script KML Anda untuk menghitung jumlah objek secara instan.</p>
-            
             <textarea id="kmlPasteInput" 
                 class="w-full h-80 p-4 font-mono text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
                 placeholder="<Placemark> ... </Placemark>"></textarea>
@@ -119,7 +120,6 @@
             </div>
         </div>
     </div>
-
 </main>
 
 <footer class="mt-20 py-10 border-t border-slate-200 text-center">
@@ -128,36 +128,34 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // --- STATE MANAGEMENT ---
     let currentInterval = 50;
-    let currentPlacemarkName = "TN";
+    let currentPlacemarkName = "TIANG";
     let map, markerLayer, routeLayer, finalKML = "";
 
-    // --- TAB SYSTEM ---
-    function openTab(tabId, interval = 50, pName = "TN") {
-        // Reset Tabs UI
+    function openTab(tabId, interval = 50, pName = "TIANG") {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('tab-active', 'text-blue-600'));
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.add('text-slate-500'));
+        document.querySelectorAll('.nav-link').forEach(l => {
+            l.classList.remove('tab-active', 'text-blue-600');
+            l.classList.add('text-slate-500');
+        });
 
         if (tabId === 'hitung') {
             document.getElementById('hitung').classList.remove('hidden');
             document.getElementById('tab-hitung').classList.add('tab-active', 'text-blue-600');
         } else {
-            // Setup Mode (Jalur 50m atau Slack 500m)
             currentInterval = interval;
             currentPlacemarkName = pName;
             
             document.getElementById('analysis-section').classList.remove('hidden');
             document.getElementById('tab-' + tabId).classList.add('tab-active', 'text-blue-600');
             
-            // Update UI Labels
-            document.getElementById('modeBadge').textContent = `Mode: {pName}`;
-            document.getElementById('infoInterval').textContent = `{interval} Meter`;
+            // Update UI Labels - Fixed template literals
+            document.getElementById('modeBadge').textContent = `Mode: ${pName}`;
+            document.getElementById('infoInterval').textContent = `${interval} Meter`;
             document.getElementById('infoIntervalText').textContent = interval;
             document.getElementById('infoType').textContent = pName.toLowerCase();
-            document.getElementById('labelOutput').textContent = `Estimasi {pName}`;
-
+            document.getElementById('labelOutput').textContent = `Estimasi ${pName}`;
+            
             if(map) {
                 setTimeout(() => map.invalidateSize(), 200);
                 resetResults();
@@ -175,27 +173,22 @@
         document.getElementById('labelFile').textContent = "Tarik file KML ke sini";
     }
 
-    // --- QUICK COUNTER ---
     document.getElementById('kmlPasteInput').addEventListener('input', function() {
         const matches = this.value.match(/<Placemark/gi);
         document.getElementById('manualCount').innerText = matches ? matches.length : 0;
     });
 
-    // --- MAP ENGINE ---
     function initMap() {
         map = L.map('map', { zoomControl: false }).setView([-2.5489, 118.0149], 5);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
-        
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap'
         }).addTo(map);
-
         markerLayer = L.layerGroup().addTo(map);
         routeLayer = L.layerGroup().addTo(map);
     }
     initMap();
 
-    // --- FILE HANDLING ---
     const fileInput = document.getElementById('fileInput');
     const dropZone = document.getElementById('dropZone');
     const downloadBtn = document.getElementById('downloadBtn');
@@ -205,13 +198,16 @@
     fileInput.onchange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
+        handleFile(file);
+    };
+
+    function handleFile(file) {
         document.getElementById('labelFile').textContent = file.name;
         const reader = new FileReader();
         reader.onload = (ev) => processData(ev.target.result, file.name);
         reader.readAsText(file);
-    };
+    }
 
-    // Haversine formula
     function getDist(p1, p2) {
         const R = 6371e3;
         const dLat = (p2.lat - p1.lat) * Math.PI / 180;
@@ -238,11 +234,14 @@
         let bounds = [];
 
         for (let i = 0; i < lines.length; i++) {
-            const coordsRaw = lines[i].getElementsByTagName("coordinates")[0].textContent.trim();
+            const coordsNode = lines[i].getElementsByTagName("coordinates")[0];
+            if(!coordsNode) continue;
+            
+            const coordsRaw = coordsNode.textContent.trim();
             const path = coordsRaw.split(/\s+/).map(c => {
                 const p = c.split(',');
                 return { lng: parseFloat(p[0]), lat: parseFloat(p[1]) };
-            });
+            }).filter(p => !isNaN(p.lat) && !isNaN(p.lng));
 
             L.polyline(path.map(p => [p.lat, p.lng]), {color: '#2563eb', weight: 4, opacity: 0.6}).addTo(routeLayer);
 
@@ -258,21 +257,21 @@
                     const ratio = (nextMilestone - currentPathDist) / segDist;
                     const lat = p1.lat + (p2.lat - p1.lat) * Math.max(0, Math.min(1, ratio));
                     const lng = p1.lng + (p2.lng - p1.lng) * Math.max(0, Math.min(1, ratio));
-
+                    
                     placemarksXML += `
                     <Placemark>
-                        <name>${currentPlacemarkName}</name>
+                        <name>${currentPlacemarkName} ${objectCount + 1}</name>
                         <Point><coordinates>${lng},${lat},0</coordinates></Point>
                     </Placemark>`;
-                    
+
                     L.circleMarker([lat, lng], {
                         radius: currentPlacemarkName === "TIANG" ? 5 : 7, 
                         color: '#ffffff', 
                         fillColor: currentPlacemarkName === "TIANG" ? '#3b82f6' : '#ef4444', 
                         fillOpacity: 1, 
                         weight: 2
-                    }).addTo(markerLayer).bindPopup(`${currentPlacemarkName}`);
-
+                    }).addTo(markerLayer).bindPopup(`${currentPlacemarkName} #${objectCount+1}`);
+                    
                     objectCount++;
                     nextMilestone += currentInterval;
                 }
@@ -306,7 +305,6 @@
         a.click();
     };
 
-    // --- DRAG & DROP SUPPORT ---
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
     });
@@ -314,10 +312,7 @@
     dropZone.addEventListener('drop', (e) => {
         const file = e.dataTransfer.files[0];
         if(file && file.name.endsWith('.kml')) {
-            document.getElementById('labelFile').textContent = file.name;
-            const reader = new FileReader();
-            reader.onload = (ev) => processData(ev.target.result, file.name);
-            reader.readAsText(file);
+            handleFile(file);
         } else {
             alert("Harap masukkan file .kml");
         }
